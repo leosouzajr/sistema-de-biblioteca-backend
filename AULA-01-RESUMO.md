@@ -16,7 +16,29 @@ Define os dois primeiros modelos de dados do sistema:
 - **`Usuario`** — tabela de usuários com campos: `id`, `nome`, `email` (único), `telefone` (opcional), `createdAt`
 
 ### `back/src/app/lib/prisma.ts` 
-Instância singleton do `PrismaClient` para uso em toda a aplicação. Resolve o problema de múltiplas conexões causadas pelo hot reload do Next.js em desenvolvimento, armazenando a instância em `globalThis`.
+Instância singleton do `PrismaClient` para uso em toda a aplicação. Resolve o problema de múltiplas conexões causadas pelo hot reload do Next.js em desenvolvimento, armazenando a instância em `globalThis`. Codigo a seguir disponibilizado na documentacao do prisma(depois de criar o arquivo copie para la):
+
+// Instância singleton do PrismaClient para uso em toda a aplicação Next.js.
+//
+// O problema: Next.js em desenvolvimento recarrega módulos a cada mudança (hot reload),
+// o que criaria múltiplas conexões com o banco se instanciássemos PrismaClient normalmente.
+// A solução: salvar a instância em globalThis, que persiste entre os recarregamentos.
+import { PrismaClient } from '@prisma/client';
+
+// Extende globalThis com tipagem para armazenar a instância entre recarregamentos
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+// Reutiliza a instância existente ou cria uma nova com logs habilitados
+export const prisma = globalForPrisma.prisma ?? new PrismaClient({
+  log: ['query', 'error', 'warn'],
+});
+
+// Em produção não há hot reload, então não precisamos guardar em globalThis
+if (process.env.NODE_ENV !== 'production') {
+  globalForPrisma.prisma = prisma;
+}
 
 ### `back/prisma/migrations/20260520143653_initial/migration.sql` (gerado)
 Migration SQL inicial gerada automaticamente pelo Prisma ao rodar `prisma migrate dev`. Cria as tabelas `Livro` e `Usuario` com suas respectivas colunas, constraints e índices únicos.
